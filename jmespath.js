@@ -140,6 +140,7 @@
   var TYPE_NULL = 7;
   var TYPE_ARRAY_NUMBER = 8;
   var TYPE_ARRAY_STRING = 9;
+  var TYPE_ARRAY_OBJECT = 10;
   var TYPE_NAME_TABLE = {
     0: 'number',
     1: 'any',
@@ -150,7 +151,8 @@
     6: 'expression',
     7: 'null',
     8: 'Array<number>',
-    9: 'Array<string>'
+    9: 'Array<string>',
+    10: 'Array<object>',
   };
 
   var TOK_EOF = "EOF";
@@ -1201,6 +1203,10 @@
         "not_null": {
             _func: this._functionNotNull,
             _signature: [{types: [TYPE_ANY], variadic: true}]
+        },
+        "map_extend": {
+          _func: this._functionMapExtend,
+          _signature: [{types: [TYPE_ARRAY_OBJECT]}, {types: [TYPE_OBJECT]}]
         }
     };
   }
@@ -1269,6 +1275,7 @@
         }
         if (expected === TYPE_ARRAY_STRING ||
             expected === TYPE_ARRAY_NUMBER ||
+            expected === TYPE_ARRAY_OBJECT ||
             expected === TYPE_ARRAY) {
             // The expected type can either just be array,
             // or it can require a specific subtype (array of numbers).
@@ -1284,6 +1291,8 @@
                   subtype = TYPE_NUMBER;
                 } else if (expected === TYPE_ARRAY_STRING) {
                   subtype = TYPE_STRING;
+                } else if (expected === TYPE_ARRAY_OBJECT) {
+                  subtype = TYPE_OBJECT;
                 }
                 for (var i = 0; i < argValue.length; i++) {
                     if (!this._typeMatches(
@@ -1623,6 +1632,21 @@
         }
       }
       return minRecord;
+    },
+
+    _functionMapExtend: function(resolvedArgs) {
+      var array = resolvedArgs[0];
+      var extendObj = resolvedArgs[1];
+      var keys = Object.keys(extendObj);
+      var result = [];
+
+      for (var i = 0; i < array.length; i++) {
+        result[i] = Object.assign({}, array[i]);
+        for (var j = 0; j < keys.length; j++) {
+          result[i][keys[j]] = extendObj[keys[j]];
+        }
+      }
+      return result;
     },
 
     createKeyFunction: function(exprefNode, allowedTypes) {
