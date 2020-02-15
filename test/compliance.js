@@ -34,7 +34,7 @@ function addTestSuitesFromFile(filename) {
                         // For now just verify that an error is thrown
                         // for error tests.
                         (function(testcase, given) {
-                          it('should throw error for test ' + j, function() {
+                          it('should throw error for test ' + j + " " + testcase.expression, function() {
                               assert.throws(
                                   function() {
                                     search(given, testcase.expression);
